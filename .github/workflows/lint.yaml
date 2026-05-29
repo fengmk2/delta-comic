@@ -2,8 +2,10 @@ name: Lint
 
 on:
   push:
-    paths: 
+    paths:
       - packages
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
