@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - packages
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
