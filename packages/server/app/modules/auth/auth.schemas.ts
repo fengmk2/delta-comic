@@ -15,6 +15,4 @@ export const registerSchema = t.Object({
 
 export const loginSchema = registerSchema
 
-export const refreshSchema = t.Object({
-  refreshToken: t.String({ minLength: 16 }),
-})
+export const refreshSchema = t.Object({ refreshToken: t.String({ minLength: 16 }) })

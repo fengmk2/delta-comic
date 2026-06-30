@@ -4,12 +4,12 @@ import { AppError, isAppError } from '@/shared/errors'
 import { parseJson } from '@/shared/json'
 import { now as readNow } from '@/shared/time'
 
+import type { AuthContext } from '../auth/auth.types'
+
 import { assertSyncCollection, syncCollectionNames } from './collections'
 import { shouldApplyOperation } from './conflict'
 import { createSnapshotOperation, normalizeOperation } from './normalize'
 import { isProcessingOp, SyncRepository, toReplayedResult } from './sync.repository'
-
-import type { AuthContext } from '../auth/auth.types'
 import type {
   NormalizedSyncOperation,
   SyncChange,
@@ -27,13 +27,7 @@ export class SyncService {
   private readonly maxPushOps: number
   private readonly maxPullChanges: number
 
-  constructor(
-    db: D1Database,
-    config: {
-      maxPullChanges?: string
-      maxPushOps?: string
-    },
-  ) {
+  constructor(db: D1Database, config: { maxPullChanges?: string; maxPushOps?: string }) {
     this.repository = new SyncRepository(db)
     this.maxPushOps = readNumberVar(config.maxPushOps, 100)
     this.maxPullChanges = readNumberVar(config.maxPullChanges, 500)
@@ -48,15 +42,21 @@ export class SyncService {
   }
 
   async snapshot(auth: AuthContext, input: SyncSnapshotRequest): Promise<SyncPushResponse> {
-    if (input.schemaVersion !== 1) throw new AppError('SYNC_SCHEMA_VERSION_UNSUPPORTED', 'unsupported schemaVersion', 400)
+    if (input.schemaVersion !== 1)
+      throw new AppError('SYNC_SCHEMA_VERSION_UNSUPPORTED', 'unsupported schemaVersion', 400)
     if (!input.snapshotId || input.snapshotId.length > 120) {
-      throw new AppError('SYNC_INVALID_SNAPSHOT_ID', 'snapshotId is required and must be at most 120 chars', 400)
+      throw new AppError(
+        'SYNC_INVALID_SNAPSHOT_ID',
+        'snapshotId is required and must be at most 120 chars',
+        400,
+      )
     }
     const current = readNow()
     const operations = []
     for (const [collectionName, rows] of Object.entries(input.collections)) {
       const collection = assertSyncCollection(collectionName)
-      if (!Array.isArray(rows)) throw new AppError('SYNC_INVALID_SNAPSHOT', `${collection} must be an array`, 400)
+      if (!Array.isArray(rows))
+        throw new AppError('SYNC_INVALID_SNAPSHOT', `${collection} must be an array`, 400)
       for (const row of rows) {
         operations.push(
           await createSnapshotOperation({
@@ -72,9 +72,14 @@ export class SyncService {
   }
 
   async push(auth: AuthContext, input: SyncPushRequest): Promise<SyncPushResponse> {
-    if (input.schemaVersion !== 1) throw new AppError('SYNC_SCHEMA_VERSION_UNSUPPORTED', 'unsupported schemaVersion', 400)
+    if (input.schemaVersion !== 1)
+      throw new AppError('SYNC_SCHEMA_VERSION_UNSUPPORTED', 'unsupported schemaVersion', 400)
     if (input.operations.length > this.maxPushOps) {
-      throw new AppError('SYNC_BATCH_TOO_LARGE', `at most ${this.maxPushOps} operations can be pushed`, 413)
+      throw new AppError(
+        'SYNC_BATCH_TOO_LARGE',
+        `at most ${this.maxPushOps} operations can be pushed`,
+        413,
+      )
     }
     const results: SyncPushItemResult[] = []
     for (const operation of input.operations) {
@@ -87,10 +92,7 @@ export class SyncService {
       userId: auth.userId,
     })
     return {
-      checkpoint: {
-        latestSeq: await this.repository.latestSeq(auth.userId),
-        serverTime,
-      },
+      checkpoint: { latestSeq: await this.repository.latestSeq(auth.userId), serverTime },
       results,
     }
   }
@@ -131,12 +133,19 @@ export class SyncService {
     }
   }
 
-  private async applyOperation(auth: AuthContext, rawOperation: SyncPushRequest['operations'][number]) {
+  private async applyOperation(
+    auth: AuthContext,
+    rawOperation: SyncPushRequest['operations'][number],
+  ) {
     const receivedAt = readNow()
     let operation: NormalizedSyncOperation
     try {
       operation = await normalizeOperation(rawOperation, auth.terminalUuid)
-      const existing = await this.repository.findOperation(auth.userId, auth.terminalUuid, operation.opId)
+      const existing = await this.repository.findOperation(
+        auth.userId,
+        auth.terminalUuid,
+        operation.opId,
+      )
       if (existing && !isProcessingOp(existing)) return toReplayedResult(existing)
       if (!existing) {
         const claimed = await this.repository.claimOperation({
@@ -146,7 +155,11 @@ export class SyncService {
           userId: auth.userId,
         })
         if (!claimed) {
-          const replayed = await this.repository.findOperation(auth.userId, auth.terminalUuid, operation.opId)
+          const replayed = await this.repository.findOperation(
+            auth.userId,
+            auth.terminalUuid,
+            operation.opId,
+          )
           if (replayed) return toReplayedResult(replayed)
         }
       }
@@ -170,12 +183,19 @@ export class SyncService {
     operation: NormalizedSyncOperation,
     current: number,
   ): Promise<SyncPushItemResult> {
-    const currentEntity = await this.repository.findEntity(auth.userId, operation.collection, operation.entityId)
+    const currentEntity = await this.repository.findEntity(
+      auth.userId,
+      operation.collection,
+      operation.entityId,
+    )
     const operationAlreadyStored =
       currentEntity?.last_op_id === operation.opId &&
       currentEntity.last_terminal_uuid === auth.terminalUuid &&
       currentEntity.version === operation.version
-    if (!operationAlreadyStored && !shouldApplyOperation({ ...operation, terminalUuid: auth.terminalUuid }, currentEntity)) {
+    if (
+      !operationAlreadyStored &&
+      !shouldApplyOperation({ ...operation, terminalUuid: auth.terminalUuid }, currentEntity)
+    ) {
       await this.repository.updateOperationResult({
         entityVersion: currentEntity?.version ?? null,
         opId: operation.opId,

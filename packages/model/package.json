@@ -36,6 +36,7 @@
     "es-toolkit": "catalog:"
   },
   "devDependencies": {
+    "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
   },

@@ -93,10 +93,7 @@ export interface SyncPushItemResult {
   result: SyncOperationResult
   serverSeq?: number
   entityVersion?: string
-  error?: {
-    code: string
-    message: string
-  }
+  error?: { code: string; message: string }
 }
 
 export interface SyncCheckpoint {
@@ -125,11 +122,6 @@ export interface SyncChange {
 }
 
 export interface SyncPullResponse {
-  checkpoint: {
-    sinceSeq: number
-    nextSeq: number
-    latestSeq: number
-    hasMore: boolean
-  }
+  checkpoint: { sinceSeq: number; nextSeq: number; latestSeq: number; hasMore: boolean }
   changes: SyncChange[]
 }

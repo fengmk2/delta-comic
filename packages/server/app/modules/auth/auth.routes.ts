@@ -3,20 +3,21 @@ import Elysia from 'elysia'
 import { requireAuth } from '@/shared/http/authGuard'
 import { ok } from '@/shared/response'
 
-import { AuthService } from './auth.service'
 import { loginSchema, refreshSchema, registerSchema } from './auth.schemas'
-
+import { AuthService } from './auth.service'
 import type { LoginRequest, RefreshRequest, RegisterRequest } from './auth.types'
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
   .post(
     '/register',
-    async ({ body, request }) => ok(await AuthService.fromRequest(request).register(body as RegisterRequest)),
+    async ({ body, request }) =>
+      ok(await AuthService.fromRequest(request).register(body as RegisterRequest)),
     { body: registerSchema },
   )
   .post(
     '/login',
-    async ({ body, request }) => ok(await AuthService.fromRequest(request).login(body as LoginRequest)),
+    async ({ body, request }) =>
+      ok(await AuthService.fromRequest(request).login(body as LoginRequest)),
     { body: loginSchema },
   )
   .post(

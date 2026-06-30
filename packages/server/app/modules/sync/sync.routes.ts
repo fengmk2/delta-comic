@@ -5,7 +5,6 @@ import { ok } from '@/shared/response'
 
 import { syncPullSchema, syncPushSchema, syncSnapshotSchema } from './sync.schemas'
 import { SyncService } from './sync.service'
-
 import type { SyncPullRequest, SyncPushRequest, SyncSnapshotRequest } from './sync.types'
 
 export const syncRoutes = new Elysia({ prefix: '/sync' })

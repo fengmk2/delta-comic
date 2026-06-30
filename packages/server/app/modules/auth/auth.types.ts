@@ -62,14 +62,8 @@ export interface AuthContext {
 }
 
 export interface AuthTokensResponse {
-  user: {
-    id: string
-    loginName: string
-  }
-  terminal: {
-    terminalUuid: string
-    displayName?: string
-  }
+  user: { id: string; loginName: string }
+  terminal: { terminalUuid: string; displayName?: string }
   tokens: {
     accessToken: string
     accessExpiresAt: number
