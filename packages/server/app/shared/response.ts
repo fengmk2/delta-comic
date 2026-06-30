@@ -7,11 +7,7 @@ export interface ApiSuccess<T> {
 
 export interface ApiFailure {
   ok: false
-  error: {
-    code: string
-    message: string
-    details?: unknown
-  }
+  error: { code: string; message: string; details?: unknown }
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiFailure
@@ -31,7 +27,11 @@ const maybeValidationError = (error: unknown): AppError | undefined => {
   if (!error || typeof error !== 'object') return undefined
   const candidate = error as { code?: unknown; message?: unknown }
   if (candidate.code === 'VALIDATION') {
-    return new AppError('REQUEST_VALIDATION_FAILED', String(candidate.message ?? 'request validation failed'), 400)
+    return new AppError(
+      'REQUEST_VALIDATION_FAILED',
+      String(candidate.message ?? 'request validation failed'),
+      400,
+    )
   }
   return undefined
 }
